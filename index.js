@@ -41,6 +41,13 @@ async function run() {
         res.send(result);
     })
     
+    app.get('/jobs/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) }
+      const result = await jobsCollection.findOne(query);
+      res.send(result);
+  })
+    
     app.get('/jobs', async (req, res) => {
         const cursor = jobsCollection.find();
         const result = await cursor.toArray();
@@ -53,6 +60,28 @@ async function run() {
       const result = await jobsCollection.insertOne(newJob);
       res.send(result);
     })
+
+  
+
+    app.put('/jobs/:id', async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) }
+      const options = { upsert: true };
+      const updatedJob = req.body;
+  
+      const job = {
+          $set: {
+              title: updatedJob.title,
+              deadline: updatedJob.deadline,
+              category: updatedJob.category,
+              minPrice: updatedJob.minPrice,
+              maxPrice: updatedJob.maxPrice,
+              descrpition: updatedJob.descrpition
+          }
+      }
+      const result = await jobsCollection.updateOne(filter, job, options);
+      res.send(result);
+  })  
 
     app.delete('/jobs/:id', async (req, res) => {
       const id = req.params.id;
