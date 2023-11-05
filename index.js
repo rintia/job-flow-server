@@ -30,6 +30,17 @@ async function run() {
 
     const jobsCollection = client.db('jobFlowDB').collection('jobs');
 
+    // Jobs
+    app.get('/jobs', async (req, res) => {
+        console.log(req.query.email);
+        let query = {};
+        if (req.query?.email) {
+            query = { email: req.query.email }
+        }
+        const result = await jobsCollection.find(query).toArray();
+        res.send(result);
+    })
+    
     app.get('/jobs', async (req, res) => {
         const cursor = jobsCollection.find();
         const result = await cursor.toArray();
@@ -42,6 +53,8 @@ async function run() {
       const result = await jobsCollection.insertOne(newJob);
       res.send(result);
     })
+
+ 
 
 
 
