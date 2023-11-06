@@ -106,7 +106,7 @@ async function run() {
       const result = await bidsCollection.find(query).toArray();
       res.send(result);
     })
-    
+
     app.get('/bids', async (req, res) => {
       const cursor = bidsCollection.find();
       const result = await cursor.toArray();
@@ -115,7 +115,21 @@ async function run() {
 
   
 
-    
+        app.patch('/bids/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: new ObjectId(id) };
+            const updatedBid = req.body;
+            console.log(updatedBid);
+            const updateDoc = {
+                $set: {
+                    status: updatedBid.status,
+                    progress: updatedBid.progress
+
+                },
+            };
+            const result = await bidsCollection.updateOne(filter, updateDoc);
+            res.send(result);
+        })
 
    
 
