@@ -29,68 +29,82 @@ async function run() {
     await client.connect();
 
     const jobsCollection = client.db('jobFlowDB').collection('jobs');
+    const bidsCollection = client.db('jobFlowDB').collection('bids');
 
     // Jobs
     app.get('/jobs', async (req, res) => {
-        console.log(req.query.email);
-        let query = {};
-        if (req.query?.email) {
-            query = { email: req.query.email }
-        }
-        const result = await jobsCollection.find(query).toArray();
-        res.send(result);
+      console.log(req.query.email);
+      let query = {};
+      if (req.query?.email) {
+        query = { email: req.query.email }
+      }
+      const result = await jobsCollection.find(query).toArray();
+      res.send(result);
     })
-    
+
     app.get('/jobs/:id', async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) }
       const result = await jobsCollection.findOne(query);
       res.send(result);
-  })
-    
-    app.get('/jobs', async (req, res) => {
-        const cursor = jobsCollection.find();
-        const result = await cursor.toArray();
-        res.send(result);
     })
 
-    app.post('/jobs', async(req, res) => {
-        const newJob = req.body;
+    app.get('/jobs', async (req, res) => {
+      const cursor = jobsCollection.find();
+      const result = await cursor.toArray();
+      res.send(result);
+    })
+
+    app.post('/jobs', async (req, res) => {
+      const newJob = req.body;
       console.log(newJob);
       const result = await jobsCollection.insertOne(newJob);
       res.send(result);
     })
 
-  
+
 
     app.put('/jobs/:id', async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) }
       const options = { upsert: true };
       const updatedJob = req.body;
-  
+
       const job = {
-          $set: {
-              title: updatedJob.title,
-              deadline: updatedJob.deadline,
-              category: updatedJob.category,
-              minPrice: updatedJob.minPrice,
-              maxPrice: updatedJob.maxPrice,
-              descrpition: updatedJob.descrpition
-          }
+        $set: {
+          title: updatedJob.title,
+          deadline: updatedJob.deadline,
+          category: updatedJob.category,
+          minPrice: updatedJob.minPrice,
+          maxPrice: updatedJob.maxPrice,
+          descrpition: updatedJob.descrpition
+        }
       }
       const result = await jobsCollection.updateOne(filter, job, options);
       res.send(result);
-  })  
+    })
 
     app.delete('/jobs/:id', async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await jobsCollection.deleteOne(query);
       res.send(result);
-  })
+    })
 
- 
+    //  Bids
+
+    app.get('/bids', async (req, res) => {
+      const cursor = bidsCollection.find();
+      const result = await cursor.toArray();
+      res.send(result);
+    })
+
+    app.post('/bids', async (req, res) => {
+      const newBid = req.body;
+      console.log(newBid);
+      const result = await bidsCollection.insertOne(newBid);
+      res.send(result);
+    })
 
 
 
@@ -109,9 +123,9 @@ run().catch(console.dir);
 
 
 app.get('/', (req, res) => {
-    res.send('job flow is running')
+  res.send('job flow is running')
 })
 
 app.listen(port, () => {
-    console.log(`Job Flow Server is running on port ${port}`)
+  console.log(`Job Flow Server is running on port ${port}`)
 })
