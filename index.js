@@ -103,13 +103,12 @@ async function run() {
       if (req.query?.ownerEmail) {
         query = { ownerEmail: req.query.ownerEmail }
        }
-      const result = await bidsCollection.find(query).toArray();
+      const result = await bidsCollection.find(query).sort({'price' : 1}).toArray();
       res.send(result);
     })
 
     app.get('/bids', async (req, res) => {
-      const cursor = bidsCollection.find();
-      const result = await cursor.toArray();
+      const result = await bidsCollection.find().sort({"price" : 1}).toArray();
       res.send(result);
     })
 
