@@ -93,9 +93,10 @@ async function run() {
 
     //  Bids
 
+  
+
     app.get('/bids', async (req, res) => {
       console.log(req.query.userEmail);
-      console.log(req.query.price);
       let query ={};
       if (req.query?.userEmail) {
        query = { userEmail: req.query.userEmail }
@@ -103,14 +104,16 @@ async function run() {
       if (req.query?.ownerEmail) {
         query = { ownerEmail: req.query.ownerEmail }
        }
-      const result = await bidsCollection.find(query).sort({'price' : 1}).toArray();
+      const result = await bidsCollection.find(query).sort({"status" : 1, "_id" : 1}).toArray();
+      res.send(result);
+    })
+  
+
+    app.get('/bids', async (req, res) => {
+      const result = await bidsCollection.find().sort({"status" : 1, "_id" : 1}).toArray();
       res.send(result);
     })
 
-    app.get('/bids', async (req, res) => {
-      const result = await bidsCollection.find().sort({"price" : 1}).toArray();
-      res.send(result);
-    })
 
   
 
@@ -121,8 +124,7 @@ async function run() {
             console.log(updatedBid);
             const updateDoc = {
                 $set: {
-                    status: updatedBid.status,
-                    progress: updatedBid.progress
+                    status: updatedBid.status
 
                 },
             };
