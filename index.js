@@ -9,7 +9,8 @@ const port = process.env.PORT || 5000;
 // middleware
 app.use(cors({
   origin: [
-    'http://localhost:5173'
+    'http://localhost:5173',
+    'https://job-flow-33fe0.web.app'
   ],
   credentials: true
 }));
@@ -103,8 +104,23 @@ async function run() {
       console.log('user for token', user);
       const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {expiresIn: '1h'})
 
-      res.send({token});
+      res.cookie('token', token,{
+        httpOnly: true,
+        secure: true,
+        sameSite: 'none'
+      })
+      .send({success: true});
     })
+
+    app.post('/logout', async (req, res) => {
+      const user = req.body;
+      console.log('logging out', user);
+      res.clearCookie('token', 
+      { maxAge: 0, 
+        secure: true,
+        sameSite: 'none' })
+      .send({ success: true })
+  })
 
     //  Bids
 
