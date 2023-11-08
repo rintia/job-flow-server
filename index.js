@@ -93,26 +93,29 @@ async function run() {
 
     //  Bids
 
-  
-
     app.get('/bids', async (req, res) => {
       console.log(req.query.userEmail);
       let query ={};
+      let result = null;
       if (req.query?.userEmail) {
        query = { userEmail: req.query.userEmail }
+       result = await bidsCollection.find(query).sort({'_id' :1}).toArray();
       }
       if (req.query?.ownerEmail) {
         query = { ownerEmail: req.query.ownerEmail }
+        result = await bidsCollection.find(query).sort({'_id' :1}).toArray();
        }
-      const result = await bidsCollection.find(query).sort({"status" : 1, "_id" : 1}).toArray();
+
+      else{
+        result = await bidsCollection.find(query).sort({'status' :1}).toArray();
+      }
+       
+      
       res.send(result);
     })
   
 
-    app.get('/bids', async (req, res) => {
-      const result = await bidsCollection.find().sort({"status" : 1, "_id" : 1}).toArray();
-      res.send(result);
-    })
+   
 
 
   
