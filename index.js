@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
-const jwt = require('jsonwebtoken')
+const jwt = require('jsonwebtoken');
+const cookieParser = require('cookie-parser');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config()
 const app = express();
@@ -15,8 +16,8 @@ app.use(cors({
   credentials: true
 }));
 app.use(express.json());
+app.use(cookieParser());
 
-console.log(process.env.DB_PASS)
 
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.cj9n1qe.mongodb.net/?retryWrites=true&w=majority`;
@@ -29,6 +30,28 @@ const client = new MongoClient(uri, {
     deprecationErrors: true,
   }
 });
+
+// middlewares 
+const logger = (req, res, next) => {
+  console.log('log: info', req.method, req.url);
+  next();
+}
+
+const verifyToken = (req, res, next) => {
+  const token = req?.cookies?.token;
+  // console.log('token in the middleware', token);
+  // no token available 
+  if (!token) {
+    return res.status(401).send({ message: 'unauthorized access' })
+  }
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+    if (err) {
+      return res.status(401).send({ message: 'unauthorized access' })
+    }
+    req.user = decoded;
+    next();
+  })
+}
 
 async function run() {
   try {
@@ -99,76 +122,79 @@ async function run() {
     })
 
     // auth related api 
-    app.post('/jwt', async (req, res) => {
+    app.post('/jwt', logger, async (req, res) => {
       const user = req.body;
       console.log('user for token', user);
-      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {expiresIn: '1h'})
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' })
 
-      res.cookie('token', token,{
+      res.cookie('token', token, {
         httpOnly: true,
         secure: true,
         sameSite: 'none'
       })
-      .send({success: true});
+        .send({ success: true });
     })
 
     app.post('/logout', async (req, res) => {
       const user = req.body;
       console.log('logging out', user);
-      res.clearCookie('token', 
-      { maxAge: 0, 
-        secure: true,
-        sameSite: 'none' })
-      .send({ success: true })
-  })
+      res.clearCookie('token',
+        {
+          maxAge: 0,
+          secure: true,
+          sameSite: 'none'
+        })
+        .send({ success: true })
+    })
 
     //  Bids
 
-    app.get('/bids', async (req, res) => {
+    app.get('/bids', logger, verifyToken, async (req, res) => {
       console.log(req.query.userEmail);
-      let query ={};
+      console.log('cook cookies', req.cookies);
+      let query = {};
       let result = null;
       if (req.query?.userEmail) {
-       query = { userEmail: req.query.userEmail }
-       result = await bidsCollection.find(query).sort({'_id' :1}).toArray();
+        query = { userEmail: req.query.userEmail }
+        result = await bidsCollection.find(query).sort({ '_id': 1 }).toArray();
       }
       if (req.query?.ownerEmail) {
         query = { ownerEmail: req.query.ownerEmail }
-        result = await bidsCollection.find(query).sort({'_id' :1}).toArray();
-       }
-
-      else{
-        result = await bidsCollection.find(query).sort({'status' :1}).toArray();
+        result = await bidsCollection.find(query).sort({ '_id': 1 }).toArray();
       }
-       
-      
+
+      else {
+        result = await bidsCollection.find(query).sort({ 'status': 1 }).toArray();
+      }
+
+
       res.send(result);
     })
-  
-
-   
 
 
-  
 
-        app.patch('/bids/:id', async (req, res) => {
-            const id = req.params.id;
-            const filter = { _id: new ObjectId(id) };
-            const updatedBid = req.body;
-            console.log(updatedBid);
-            const updateDoc = {
-                $set: {
-                    status: updatedBid.status
 
-                },
-            };
-            const result = await bidsCollection.updateOne(filter, updateDoc);
-            res.send(result);
-        })
 
-   
 
-   
+
+    app.patch('/bids/:id', async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const updatedBid = req.body;
+      console.log(updatedBid);
+      const updateDoc = {
+        $set: {
+          status: updatedBid.status
+
+        },
+      };
+      const result = await bidsCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    })
+
+
+
+
 
     app.post('/bids', async (req, res) => {
       const newBid = req.body;
