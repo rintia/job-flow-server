@@ -10,6 +10,7 @@ const port = process.env.PORT || 5000;
 // middleware
 app.use(cors({
   origin: [
+    'https://gleeful-semolina-b8a7d1.netlify.app',
     'https://job-flow-33fe0.firebaseapp.com',
     'https://job-flow-33fe0.web.app'
   ],
